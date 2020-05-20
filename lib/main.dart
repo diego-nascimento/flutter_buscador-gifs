@@ -1,3 +1,4 @@
+import 'package:buscadorgif/pages/gif_page.dart';
 import 'package:flutter/material.dart';
 import 'package:buscadorgif/pages/Home.dart';
 

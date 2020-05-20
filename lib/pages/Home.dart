@@ -1,6 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:share/share.dart';
+import 'package:transparent_image/transparent_image.dart';
+
+import 'gif_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -22,9 +26,7 @@ class _HomePageState extends State<HomePage> {
   }
   @override
   void initState(){
-    _getGif().then((map) =>{
-      print(map)
-    });
+    _getGif();
   }
 
   @override
@@ -41,6 +43,16 @@ class _HomePageState extends State<HomePage> {
           Padding(
             padding: EdgeInsets.all(10),
             child: TextField(
+              onSubmitted: (text){
+                setState(() {
+                  _search = text;
+                  if(_search == ""){
+                    _search = null;
+                  }
+                  _offset = 0;
+                });
+
+              },
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white)
@@ -86,6 +98,16 @@ class _HomePageState extends State<HomePage> {
       )
     );
   }
+
+  int getCount(List data){
+    if(_search == null){
+      return data.length;
+    }else{
+      return data.length +1;
+    }
+  }
+
+
   Widget _createGiftable(BuildContext context, AsyncSnapshot snapshot){
     return GridView.builder(
         padding: EdgeInsets.all(10),
@@ -94,15 +116,54 @@ class _HomePageState extends State<HomePage> {
           crossAxisSpacing: 10,
           mainAxisSpacing: 10
         ),
-        itemCount: snapshot.data["data"].length,
+        itemCount: getCount(snapshot.data["data"]),
         itemBuilder: (context, index){
-          return GestureDetector(
-            child: Image.network(
-              snapshot.data["data"][index]["images"]["fixed_height"]["url"],
-              height: 300,
-              fit: BoxFit.cover,
-            ),
-          );
+          if(_search == null || index <snapshot.data["data"].length){
+            return GestureDetector(
+              onTap: (){
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context)=> Gif(snapshot.data["data"][index])
+                  )
+                );
+              },
+              onLongPress: (){
+                Share.share(snapshot.data["data"][index]["images"]["fixed_height"]["url"]);
+              },
+              child:FadeInImage.memoryNetwork(
+                image: snapshot.data["data"][index]["images"]["fixed_height"]["url"],
+                height: 300,
+                fit: BoxFit.cover,
+                placeholder: kTransparentImage,
+              ),
+            );
+          }else{
+            return Container(
+              child: GestureDetector(
+                onTap: (){
+                  setState(() {
+                    _offset +=20;
+                  });
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.add,
+                        color: Colors.white,
+                    ),
+                    Text("Carregar mais...",
+                      style: TextStyle(
+                          color: Colors.white,
+                      ),
+                    )
+                  ],
+                )
+              ),
+            );
+          }
+
         }
     );
   }
